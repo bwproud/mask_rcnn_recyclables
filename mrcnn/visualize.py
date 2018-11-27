@@ -84,7 +84,8 @@ def display_instances(image, boxes, masks, class_ids, class_names,
                       scores=None, title="",
                       figsize=(16, 16), ax=None,
                       show_mask=True, show_bbox=True,
-                      colors=None, captions=None):
+                      colors=None, captions=None,
+                      making_image=False, real_time=False):
     """
     boxes: [num_instance, (y1, x1, y2, x2, class_id)] in image coordinates.
     masks: [height, width, num_instances]
@@ -164,6 +165,16 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             p = Polygon(verts, facecolor="none", edgecolor=color)
             ax.add_patch(p)
     ax.imshow(masked_image.astype(np.uint8))
+    # To transform the drawn figure into ndarray X
+    fig.canvas.draw()
+    X = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
+    X = X.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    # open cv's RGB style: BGR
+    if not real_time:
+        X = X[..., ::-1]
+    if making_image or real_time:
+        plt.close()
+        return X
     if auto_show:
         plt.show()
 
