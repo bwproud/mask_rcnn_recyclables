@@ -26,6 +26,9 @@ ROOT_DIR = os.path.abspath("../")
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn import utils
+from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+from matplotlib.figure import Figure
+import cv2
 
 
 ############################################################
@@ -106,10 +109,10 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         assert boxes.shape[0] == masks.shape[-1] == class_ids.shape[0]
 
     # If no axis is passed, create one and automatically call show()
-    auto_show = False
+    auto_show = True
     if not ax:
-        _, ax = plt.subplots(1, figsize=figsize)
-        auto_show = True
+        fig, ax = plt.subplots(1, figsize=figsize)
+        canvas = FigureCanvas(fig)
 
     # Generate random colors
     colors = colors or random_colors(N)
