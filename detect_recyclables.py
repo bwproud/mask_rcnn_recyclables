@@ -64,7 +64,7 @@ class RecycleDataset(utils.Dataset):
         self.add_class("recycle", 3, "plastic_bottle")
 
         # Train or validation dataset?
-        assert subset in ["train", "val", "test"]
+        # assert subset in ["train", "val", "test"]
         dataset_dir = os.path.join(dataset_dir, subset)
         class_names=("glass_bottle", "metal_can", "plastic_bottle")
         for im_class in class_names:
