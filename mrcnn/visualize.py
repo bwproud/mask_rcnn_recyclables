@@ -26,9 +26,6 @@ ROOT_DIR = os.path.abspath("../")
 # Import Mask RCNN
 sys.path.append(ROOT_DIR)  # To find local version of the library
 from mrcnn import utils
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-from matplotlib.figure import Figure
-import cv2
 
 
 ############################################################
@@ -87,8 +84,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
                       scores=None, title="",
                       figsize=(16, 16), ax=None,
                       show_mask=True, show_bbox=True,
-                      colors=None, captions=None,
-                      making_image=False, real_time=False):
+                      colors=None, captions=None, save=False):
     """
     boxes: [num_instance, (y1, x1, y2, x2, class_id)] in image coordinates.
     masks: [height, width, num_instances]
@@ -109,10 +105,10 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         assert boxes.shape[0] == masks.shape[-1] == class_ids.shape[0]
 
     # If no axis is passed, create one and automatically call show()
-    auto_show = True
+    auto_show = False
     if not ax:
         fig, ax = plt.subplots(1, figsize=figsize)
-        canvas = FigureCanvas(fig)
+        auto_show = True
 
     # Generate random colors
     colors = colors or random_colors(N)
@@ -168,18 +164,10 @@ def display_instances(image, boxes, masks, class_ids, class_names,
             p = Polygon(verts, facecolor="none", edgecolor=color)
             ax.add_patch(p)
     ax.imshow(masked_image.astype(np.uint8))
-    # To transform the drawn figure into ndarray X
-    fig.canvas.draw()
-    X = np.fromstring(fig.canvas.tostring_rgb(), dtype=np.uint8, sep='')
-    X = X.reshape(fig.canvas.get_width_height()[::-1] + (3,))
-    # open cv's RGB style: BGR
-    if not real_time:
-        X = X[..., ::-1]
-    if making_image or real_time:
-        plt.close()
-        return X
     if auto_show:
         plt.show()
+    plt.close(fig)
+    return fig
 
 
 def display_differences(image,
