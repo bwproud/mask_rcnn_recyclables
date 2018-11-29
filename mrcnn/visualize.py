@@ -110,6 +110,7 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         fig, ax = plt.subplots(1, figsize=figsize)
         auto_show = True
 
+    if 
     # Generate random colors
     colors = colors or random_colors(N)
 
@@ -122,7 +123,11 @@ def display_instances(image, boxes, masks, class_ids, class_names,
 
     masked_image = image.astype(np.uint32).copy()
     for i in range(N):
-        color = colors[i]
+        class_id = class_ids[i]
+        if save:
+            color = colors[class_id-1]
+        else:
+            color = colors[i]
 
         # Bounding box
         if not np.any(boxes[i]):
