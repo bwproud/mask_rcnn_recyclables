@@ -8,12 +8,17 @@ Unfortunately, due to how complex it is to train a Mask RCNN model, it's not muc
 
 ## Files
 ### ML_Final_Project.pdf
+This is our final project writeup which includes information on our task, our model, and our results.
 ### Mask_RCNN_Colab_Notebook.ipynb
+This is the Colab python notebook used to both train the model and test it on the validation/test set. Open this in Colab to try out the model for yourself.
 ### examples
+This folder contains example inferences the model returned. Especially of note is demo.mp4 which is a video on which we ran our detection. 
 ### data.zip
+This zip contains the training, validation, and test data used in our project
 ### mrcnn
+This folder contains Matterport's Mask RCNN implementation. Only change we made here was to update the visualization code to keep mask colors consist across classes (to enable detection on videos) and to return the image with the bounding boxes and masking so it can be saved to a file locally.
 ### detect_recyclables.py
-
+This file contains the custom training parameters and dataset extraction for our recycling task. Is customized to allow a user to adjust the number of epochs and the number of layers to train on
 ## Authors
 
 * **Brennan Proudfoot** 
