@@ -11,6 +11,7 @@ Unfortunately, due to how complex it is to train a Mask RCNN model, it's not muc
 This is our final project writeup which includes information on our task, our model, and our results.
 ### Mask_RCNN_Colab_Notebook.ipynb
 This is the Colab python notebook used to both train the model and test it on the validation/test set. Open this in Colab to try out the model for yourself.
+NOTE: If you want to try out the model using our weights, you need to download our .h5 file from here: https://drive.google.com/file/d/1AunkAymLdhg-dgJYU4jddjcjF0XMxzzJ/view and then add it to your google drive where it will be accessed in the python notebook.
 ### examples/
 This folder contains example inferences the model returned. Especially of note is demo.mp4 which is a video on which we ran our detection. 
 ### data.zip
