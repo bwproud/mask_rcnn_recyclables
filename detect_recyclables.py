@@ -27,7 +27,7 @@ DEFAULT_LOGS_DIR = os.path.join(ROOT_DIR, "logs")
 
 
 class RecycleConfig(Config):
-    """Configuration for training on the toy  dataset.
+    """Configuration for training on the dataset.
     Derives from the base Config class and overrides some values.
     """
     # Give the configuration a recognizable name
@@ -38,7 +38,7 @@ class RecycleConfig(Config):
     IMAGES_PER_GPU = 2
 
     # Number of classes (including background)
-    NUM_CLASSES = 1 + 3  # Background + balloon
+    NUM_CLASSES = 1 + 3  # Background + plastic bottle + glass bottle + metal can
 
     # Number of training steps per epoch
     STEPS_PER_EPOCH = 100
@@ -58,7 +58,7 @@ class RecycleDataset(utils.Dataset):
         dataset_dir: Root directory of the dataset.
         subset: Subset to load: train or val
         """
-        # Add classes. We have two classes to add.
+        # Add classes. We have three classes to add.
         self.add_class("recycle", 1, "glass_bottle")
         self.add_class("recycle", 2, "metal_can")
         self.add_class("recycle", 3, "plastic_bottle")
@@ -127,7 +127,7 @@ class RecycleDataset(utils.Dataset):
             one mask per instance.
         class_ids: a 1D array of class IDs of the instance masks.
         """
-        # If not a balloon dataset image, delegate to parent class.
+        # If not a recycle dataset image, delegate to parent class.
         image_info = self.image_info[image_id]
         # if image_info["source"] not in ("glass_bottle", "metal_can"):
         if image_info["source"] != "recycle":
@@ -150,7 +150,6 @@ class RecycleDataset(utils.Dataset):
     def image_reference(self, image_id):
         """Return the path of the image."""
         info = self.image_info[image_id]
-        # if info["source"] in ("glass_bottle", "metal_can"):
         if info["source"] == "recycle":
             return info["path"]
         else:
@@ -168,107 +167,12 @@ def train(model, epochs = 30, style = 'heads'):
     dataset_val.load_recycle(args.dataset, "val")
     dataset_val.prepare()
 
-    # *** This training schedule is an example. Update to your needs ***
     # Since we're using a very small dataset, and starting from
-    # COCO trained weights, we don't need to train too long. Also,
-    # no need to train all layers, just the heads should do it.
-    print("Training network heads")
+    # COCO trained weights, we don't need to train too long.
     model.train(dataset_train, dataset_val,
                 learning_rate=config.LEARNING_RATE,
                 epochs=epochs,
                 layers=style)
-
-def getDataset():
-    # Training dataset.
-    dataset_train = RecycleDataset()
-    dataset_train.load_recycle(args.dataset, "train")
-    dataset_train.prepare()
-    # print(dataset_train.image_info[15])
-
-    # Validation dataset
-    dataset_val = RecycleDataset()
-    dataset_val.load_recycle(args.dataset, "val")
-    dataset_val.prepare()
-
-    print(args.style)
-    # image_ids = np.random.choice(dataset_train.image_ids, 4)
-    # for image_id in image_ids:
-    #     image = dataset_train.load_image(image_id)
-    #     mask, class_ids = dataset_train.load_mask(image_id)
-    #     visualize.display_top_masks(image, mask, class_ids, dataset_train.class_names)
-
-def color_splash(image, mask):
-    """Apply color splash effect.
-    image: RGB image [height, width, 3]
-    mask: instance segmentation mask [height, width, instance count]
-
-    Returns result image.
-    """
-    # Make a grayscale copy of the image. The grayscale copy still
-    # has 3 RGB channels, though.
-    gray = skimage.color.gray2rgb(skimage.color.rgb2gray(image)) * 255
-    # Copy color pixels from the original color image where mask is set
-    if mask.shape[-1] > 0:
-        # We're treating all instances as one, so collapse the mask into one layer
-        mask = (np.sum(mask, -1, keepdims=True) >= 1)
-        splash = np.where(mask, image, gray).astype(np.uint8)
-    else:
-        splash = gray.astype(np.uint8)
-    return splash
-
-def detect_and_color_splash(model, image_path=None, video_path=None):
-    assert image_path or video_path
-
-    # Image or video?
-    if image_path:
-        # Run model detection and generate the color splash effect
-        print("Running on {}".format(args.image))
-        # Read image
-        image = skimage.io.imread(args.image)
-        # Detect objects
-        r = model.detect([image], verbose=1)[0]
-        print(r)
-        # Color splash
-        splash = color_splash(image, r['masks'])
-        # splash = image
-        # Save output
-        file_name = "splash_{:%Y%m%dT%H%M%S}.png".format(datetime.datetime.now())
-        skimage.io.imsave(file_name, splash)
-    elif video_path:
-        import cv2
-        # Video capture
-        vcapture = cv2.VideoCapture(video_path)
-        width = int(vcapture.get(cv2.CAP_PROP_FRAME_WIDTH))
-        height = int(vcapture.get(cv2.CAP_PROP_FRAME_HEIGHT))
-        fps = vcapture.get(cv2.CAP_PROP_FPS)
-
-        # Define codec and create video writer
-        file_name = "splash_{:%Y%m%dT%H%M%S}.avi".format(datetime.datetime.now())
-        vwriter = cv2.VideoWriter(file_name,
-                                  cv2.VideoWriter_fourcc(*'MJPG'),
-                                  fps, (width, height))
-
-        count = 0
-        success = True
-        while success:
-            print("frame: ", count)
-            # Read next image
-            success, image = vcapture.read()
-            if success:
-                # OpenCV returns images as BGR, convert to RGB
-                image = image[..., ::-1]
-                # Detect objects
-                r = model.detect([image], verbose=0)[0]
-                # Color splash
-                # splash = color_splash(image, r['masks'])
-                splash = image
-                # RGB -> BGR to save image to video
-                splash = splash[..., ::-1]
-                # Add image to video writer
-                vwriter.write(splash)
-                count += 1
-        vwriter.release()
-    print("Saved to ", file_name)
 
 
 ############################################################
@@ -280,13 +184,13 @@ if __name__ == '__main__':
 
     # Parse command line arguments
     parser = argparse.ArgumentParser(
-        description='Train Mask R-CNN to detect balloons.')
+        description='Train Mask R-CNN to detect recyclables.')
     parser.add_argument("command",
                         metavar="<command>",
-                        help="'train' or 'splash'")
+                        help="'train' or 'detect'")
     parser.add_argument('--dataset', required=False,
-                        metavar="/path/to/balloon/dataset/",
-                        help='Directory of the Balloon dataset')
+                        metavar="/path/to/recycle/dataset/",
+                        help='Directory of the Recycle dataset')
     parser.add_argument('--weights', required=True,
                         metavar="/path/to/weights.h5",
                         help="Path to weights .h5 file or 'coco'")
@@ -296,10 +200,10 @@ if __name__ == '__main__':
                         help='Logs and checkpoints directory (default=logs/)')
     parser.add_argument('--image', required=False,
                         metavar="path or URL to image",
-                        help='Image to apply the color splash effect on')
+                        help='Image to detect')
     parser.add_argument('--video', required=False,
                         metavar="path or URL to video",
-                        help='Video to apply the color splash effect on')
+                        help='Video to detect')
     parser.add_argument('--epochs', required=False,
                         metavar="number of training epochs",
                         help='number of epochs')
@@ -369,9 +273,6 @@ if __name__ == '__main__':
     # Train or evaluate
     if args.command == "train":
         train(model, int(args.epochs), args.style)
-    elif args.command == "detect":
-        detect_and_color_splash(model, image_path=args.image,
-                                video_path=args.video)
     else:
         print("'{}' is not recognized. "
-              "Use 'train' or 'splash'".format(args.command))
+              "Use 'train' or 'detect'".format(args.command))
